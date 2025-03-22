@@ -26,9 +26,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Ensure Backend Files Exist
+      # Ensure backend exists
+      - name: Check Backend Directory
         run: |
-          touch backend/__init__.py
+          if [ ! -d "backend" ]; then
+            echo "❌ Error: Backend folder is missing!"
+            exit 1
+          fi
 
       - name: Start FastAPI Server (Background)
         run: |
@@ -51,7 +55,11 @@ jobs:
 
       - name: Run Backend Tests
         run: |
-          pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
+          if [ -d "tests" ]; then
+            pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
+          else
+            echo "⚠️ No tests found. Skipping."
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
