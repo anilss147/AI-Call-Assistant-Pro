@@ -61,7 +61,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend  # Adjust if needed
+          publish_dir: ./frontend  # Ensure this path is correct
 
       - name: Deployment Successful
         run: echo "✅ Deployment successful!"
