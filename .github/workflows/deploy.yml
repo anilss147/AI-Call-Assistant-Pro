@@ -26,34 +26,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # **🔹 Remove frontend build step if not needed**
-      # - name: Build Frontend (Gradio/Streamlit)
-      #   run: python build_frontend.py  # Remove this if no build script exists
-
-      - name: Start Backend (FastAPI)
+      - name: Start FastAPI Server (Background)
         run: |
           uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &
-        env:
-          HOST: "0.0.0.0"
-          PORT: "8000"
+          echo "Waiting for server to start..."
+          sleep 10  # Wait for 10 seconds
 
-      - name: Run Backend Tests
+      - name: Check if Backend is Running
         run: |
           curl --retry 5 --retry-delay 10 --fail http://127.0.0.1:8000/docs || exit 1
 
-      - name: Build Static Files (if using React/Vue)
+      - name: Run Backend Tests
         run: |
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm install
-            npm run build
-          fi
+          pytest tests  # Run your test cases if applicable
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend  # Change this if needed (e.g., ./dist, ./public)
+          publish_dir: ./frontend  # Adjust if using a different frontend
 
       - name: Deployment Successful
-        run: echo "🎉 Deployment to GitHub Pages was successful!"
+        run: echo "🎉 Deployment successful!"
