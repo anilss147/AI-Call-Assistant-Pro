@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # ✅ Ensure GitHub Actions can push to `gh-pages`
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -33,6 +36,17 @@ jobs:
             python build_frontend.py
           else
             echo "⚠️ build_frontend.py not found. Skipping frontend build."
+          fi
+
+      - name: Ensure Frontend Exists
+        run: |
+          if [ ! -d "frontend" ]; then
+            echo "❌ Frontend directory missing!"
+            exit 1
+          fi
+          if [ ! -f "frontend/index.html" ]; then
+            echo "❌ index.html not found in frontend directory!"
+            exit 1
           fi
 
       - name: Start FastAPI Server (Background)
@@ -67,9 +81,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages  # ✅ Ensure we push to `gh-pages`
-          publish_dir: ./frontend  # Adjust if needed
+          publish_dir: ./frontend  # ✅ Ensure `frontend` directory exists
           force_orphan: true  # ✅ Create `gh-pages` branch if missing
-          cname: example.com  # ✅ Add custom domain (Replace with your actual domain if needed)
+          enable_jekyll: false  # ✅ Disable Jekyll processing
+          cname: example.com  # ✅ Replace with your actual domain (or remove if not needed)
 
       - name: Deployment Successful
         run: echo "✅ Deployment successful!"
