@@ -57,7 +57,7 @@ jobs:
       - name: Run Backend Tests
         run: |
           if [ -d "tests" ]; then
-            pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
+            PYTHONPATH=$PWD pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
           else
             echo "⚠️ No tests found. Skipping backend tests."
           fi
@@ -69,6 +69,7 @@ jobs:
           publish_branch: gh-pages  # ✅ Ensure we push to `gh-pages`
           publish_dir: ./frontend  # Adjust if needed
           force_orphan: true  # ✅ Create `gh-pages` branch if missing
+          cname: example.com  # ✅ Add custom domain (Replace with your actual domain if needed)
 
       - name: Deployment Successful
         run: echo "✅ Deployment successful!"
