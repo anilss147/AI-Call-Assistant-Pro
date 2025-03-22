@@ -26,11 +26,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Build Frontend
+        run: |
+          if [ -f "build_frontend.py" ]; then
+            python build_frontend.py
+          else
+            echo "⚠️ build_frontend.py not found. Skipping frontend build."
+          fi
+
       - name: Start FastAPI Server (Background)
         run: |
-          uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &
-          echo "Waiting for server to start..."
-          sleep 10  # Wait for 10 seconds
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &> uvicorn.log &
+          echo "Waiting for FastAPI to start..."
+          sleep 10  # Wait for FastAPI to initialize
 
       - name: Check if Backend is Running
         run: |
@@ -38,7 +46,7 @@ jobs:
 
       - name: Run Backend Tests
         run: |
-          pytest tests  # Run your test cases if applicable
+          pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -47,4 +55,4 @@ jobs:
           publish_dir: ./frontend  # Adjust if using a different frontend
 
       - name: Deployment Successful
-        run: echo "🎉 Deployment successful!"
+        run: echo "✅ Deployment successful!"
