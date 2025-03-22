@@ -26,13 +26,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build Frontend
+      - name: Ensure Backend Files Exist
         run: |
-          if [ -f "build_frontend.py" ]; then
-            python build_frontend.py
-          else
-            echo "⚠️ build_frontend.py not found. Skipping frontend build."
-          fi
+          touch backend/__init__.py
 
       - name: Start FastAPI Server (Background)
         run: |
@@ -61,7 +57,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend  # Ensure this path is correct
+          publish_dir: ./frontend  # Adjust if needed
 
       - name: Deployment Successful
         run: echo "✅ Deployment successful!"
