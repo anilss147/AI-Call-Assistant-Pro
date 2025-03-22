@@ -1,15 +1,12 @@
-name: AI Call Assistant CI/CD
+name: Deploy AI Call Assistant to GitHub Pages
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +25,15 @@ jobs:
 
       - name: Start Backend Server
         run: |
-          python backend/server.py &
-          sleep 10  # Give time for the server to start
+          uvicorn backend.server:app --host 0.0.0.0 --port 8000 & 
+          sleep 10  # Wait for the backend to start
 
-      - name: Check if Backend is Running
+      - name: Build Frontend (Gradio)
         run: |
-          for i in {1..10}; do
-            curl -f http://127.0.0.1:8000 && break || sleep 5
-          done
+          python build_frontend.py  # If needed for static files
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend  # Adjust if needed
