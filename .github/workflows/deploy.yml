@@ -1,12 +1,15 @@
-name: Deploy AI Call Assistant to GitHub Pages
+name: Deploy AI Call Assistant
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -14,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
@@ -23,17 +26,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Start Backend Server
-        run: |
-          uvicorn backend.server:app --host 0.0.0.0 --port 8000 & 
-          sleep 10  # Wait for the backend to start
+      # **🔹 Remove frontend build step if not needed**
+      # - name: Build Frontend (Gradio/Streamlit)
+      #   run: python build_frontend.py  # Remove this if no build script exists
 
-      - name: Build Frontend (Gradio)
+      - name: Start Backend (FastAPI)
         run: |
-          python build_frontend.py  # If needed for static files
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &
+        env:
+          HOST: "0.0.0.0"
+          PORT: "8000"
+
+      - name: Run Backend Tests
+        run: |
+          curl --retry 5 --retry-delay 10 --fail http://127.0.0.1:8000/docs || exit 1
+
+      - name: Build Static Files (if using React/Vue)
+        run: |
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm install
+            npm run build
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend  # Adjust if needed
+          publish_dir: ./frontend  # Change this if needed (e.g., ./dist, ./public)
+
+      - name: Deployment Successful
+        run: echo "🎉 Deployment to GitHub Pages was successful!"
