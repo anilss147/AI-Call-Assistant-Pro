@@ -25,7 +25,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest  # ✅ Explicitly install pytest
+          pip install pytest  # ✅ Ensure pytest is installed
+
+      - name: Build Frontend
+        run: |
+          if [ -f "build_frontend.py" ]; then
+            python build_frontend.py
+          else
+            echo "⚠️ build_frontend.py not found. Skipping frontend build."
+          fi
 
       - name: Start FastAPI Server (Background)
         run: |
@@ -49,16 +57,18 @@ jobs:
       - name: Run Backend Tests
         run: |
           if [ -d "tests" ]; then
-            python -m pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
+            pytest tests || { echo "❌ Backend tests failed"; cat uvicorn.log; exit 1; }
           else
-            echo "⚠️ No tests found. Skipping."
+            echo "⚠️ No tests found. Skipping backend tests."
           fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages  # ✅ Ensure we push to `gh-pages`
           publish_dir: ./frontend  # Adjust if needed
+          force_orphan: true  # ✅ Create `gh-pages` branch if missing
 
       - name: Deployment Successful
         run: echo "✅ Deployment successful!"
