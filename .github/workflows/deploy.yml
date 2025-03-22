@@ -36,13 +36,22 @@ jobs:
 
       - name: Start FastAPI Server (Background)
         run: |
-          uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &> uvicorn.log &
-          echo "Waiting for FastAPI to start..."
-          sleep 10  # Wait for FastAPI to initialize
+          nohup uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload > uvicorn.log 2>&1 &
+          echo "✅ FastAPI server started."
 
-      - name: Check if Backend is Running
+      - name: Wait for FastAPI to Start
         run: |
-          curl --retry 5 --retry-delay 10 --fail http://127.0.0.1:8000/docs || exit 1
+          for i in {1..10}; do
+            if curl --output /dev/null --silent --head --fail http://127.0.0.1:8000/docs; then
+              echo "✅ FastAPI is up and running!"
+              exit 0
+            fi
+            echo "⏳ Waiting for FastAPI to start ($i/10)..."
+            sleep 5
+          done
+          echo "❌ FastAPI failed to start!"
+          cat uvicorn.log
+          exit 1
 
       - name: Run Backend Tests
         run: |
@@ -52,7 +61,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend  # Adjust if using a different frontend
+          publish_dir: ./frontend  # Adjust if needed
 
       - name: Deployment Successful
         run: echo "✅ Deployment successful!"
