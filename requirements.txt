@@ -2,3 +2,6 @@
 fastapi
 uvicorn
 gradio
+pytest
+httpx
+
